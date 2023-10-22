@@ -12,78 +12,41 @@ use Illuminate\Support\Facades\Mail;
 | contains the "web" middleware group. Now create something great!
 |
 */
-function sendSMS($mobile, $message = '',$channel){
-    $debug = 'on';
-    $SMS_success = 'NO';
-    $ch = curl_init();
-    $SMS_gateway_password_encoded = curl_escape($ch, "apipass");
-    $SMS_message_encoded = curl_escape($ch, $message);
-    $transmission = "http://sap4.northtrend.com" . ":" . "777" . "/cgi/WebCGI?1500101=account=" . "apiuser" . "&password=" . $SMS_gateway_password_encoded . "&port=" . $channel . "&destination=" . $mobile . "&content=" . $SMS_message_encoded;
-    
-    curl_setopt($ch, CURLOPT_URL, $transmission);
-    
-    if ($debug == 'on') { 
-      echo '<hr>' . $transmission . '<hr>'; 
-    }
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    $SMS_result = curl_exec($ch);
-    echo $SMS_result;
-    if ($debug == 'on') { 
-      echo $SMS_result . '<hr>';
-      // return $SMS_result;
-    }
-    
-    if ((strpos($SMS_result, 'Response: Success') !== false) && ((strpos($SMS_result, 'Message: Commit successfully!') !== false)))
-    {
-      $SMS_success = 'YES';
-    }
-    else
-    {
-      $SMS_success = 'NO';
-    }
 
-    curl_close($ch);
-
-    if ($SMS_success == 'YES')
-    {
-      echo '<h1 align="center">SMS SENT</h1>';
-      return true;
-    }
-    else
-    {
-      echo '<h1 align="center">SMS FAIL</h1>';
-      return false;
-    }
-}
-
-
-
-Route::get('/api/mail', function(){
-    $email = 'email@email.com';
-    Mail::to($email)->send(new \App\Mail\ForgetPassMail('body', 'subject'));
-    return 'awsss';
-});
-Route::get('/sms/test/{num?}/{port?}', function($num='09151379201', $port = 7){
-    return sendSMS($num, 'message', $port);
-    
-});
 
 
 Route::get('/test', function(){return view('scanner-backup');});
 
 // Route::group(['middleware' => 'prevent-back-history'], function(){
 
+// MAIL ===========================================================
 
+Route::get('/api/mail', function(){
+  // return view('mail.billable');
+  $email = 'junreygonzales07@gmail.com';
+  try {
+    Mail::to($email)->send(new \App\Mail\BillableMail('io', 'Invoice'));
+  } 
+  catch (Swift_TransportException $e) {
+      echo $e->getMessage();
+  }
+  
+  
+});
+
+
+// SMS ============================================================
+Route::get('/testlogs', 'GSMController@batchSend');
+Route::get('/api/gsm-live/{port?}/{start?}/{limit?}', 'GSMController@sendLiveSMS');
+Route::get('/api/gsm-live-announcement/{port?}/{start?}/{limit?}', 'GSMController@sendLiveSMSAnnouncement');
+
+
+// MAIN APP ======================================================
 Route::post('/authlogin', 'AuthUserController@login');
 
 Route::get('/login', 'AuthUserController@loginView')->name('login');
 
 Route::get('/ystartg8001', 'GSMController@sendSMS');
-
-
-
-// sms
-Route::get('/testlogs', 'GSMController@batchSend');
 
 Route::group(['middleware' => 'authuser'], function () {
 

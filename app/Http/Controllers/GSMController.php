@@ -157,5 +157,160 @@ class GSMController extends Controller
                 ->update(['sms' => 0]);
         return $data;
     }
+
+    // live send SMS
+    function sendLiveSMS($smsport = '', $start = '', $limit = ''){
+            if(!$smsport)
+            {
+                echo 'sms failed no sms port selected';
+                return;
+            }
+            $result = DB::select("Select user.guardian_contact, user.fullname, log.date_created, log._userId, log.status
+                                  from user_tbl user inner join user_log log
+                                  on user.userId = log._userId
+                                  where log.sms = 0 order by log.date_created limit ".$start.", ".$limit); 
+            
+            
+            echo 'sms sending: ';
+            $mobilenum_pattern = "/^(09)\d{9}$/";
+            if($result){
+                foreach ($result as $value) {
+                    
+                  if(!preg_match($mobilenum_pattern, $value->guardian_contact))
+                  {
+                    $sms = 2;
+                    $this->updateSMSlog($value->_userId, $value->date_created, $sms );
+                    continue;
+                  }
+                  
+                  $status = $value->status;
+                  $msg = $this->smsMessageTemplate($value->status, $value->fullname, $value->date_created);
+                  $smsResult = $this->smsRequest($value->guardian_contact, $msg, $smsport);
+                  $sms = 1;
+                  echo ' -'.$smsResult.'- ';
+                //   $smsResult = 'success';
+                //   dd($value->guardian_contact, $msg);
+                  if($smsResult == 'failed'){
+                    sleep(1);
+                    
+                    $count = 1;
+                    while ($smsResult == 'failed' && $count <= 2) {
+                      $smsResult = $this->smsRequest($value->guardian_contact, $msg, $smsport);
+                      $count++;
+                    }
+
+                    if($smsResult == 'failed')
+                    $sms = 2;
+        
+                    $this->updateSMSlog($value->_userId, $value->date_created, $sms );
+          
+                  }else{
+                    $this->updateSMSlog($value->_userId, $value->date_created, $sms );
+                  }
+                  sleep(10);
+                }
+            }
+        // $this->smsRequest($number, $message, $port);
+    }
+
+    function smsMessageTemplate($status, $fullname, $timelog){
+        $message = "Good Day Sir/Ma'am, \n".
+                      "your Son/Daughter ".$fullname.
+                      " exited the school around ".date('m/d/Y h:i a', strtotime($timelog)).
+                      "\n\nCordova Catholic Cooperative School. ❤️CCCS_cares";
+      
+        if($status == 'in')
+        {
+            $message = "Good Day Sir/Ma'am, \n".
+            "your Son/Daughter ".$fullname.
+            " entered the school around ".date('m/d/Y h:i a', strtotime($timelog)).
+            "\n\nCordova Catholic Cooperative School. 
+            ❤️CCCS_cares";
+        }
+      
+        return $message."\nThis message is automated. Do Not Reply";
+    }
+
+    function updateSMSlog($id, $datelog, $sms){
+        DB::table('user_log')
+            ->where('_userId', $id)
+            ->where('date_created', $datelog)
+            ->update(['sms' => $sms]);
+        
+      }
+
+
+
+    //  live SEND SMS ANNOUNCEMENT
+    function updateAnnouncementLogStatus($uuid, $userId, $status, $port){
+        date_default_timezone_set("Asia/Hong_Kong");
+        $dateNow = date("Y-m-d H:i:s");
+
+        DB::table('announcement_logs')
+            ->where('uuid', $uuid)
+            ->where('_userId', $userId)
+            ->update([
+                'date_sent' => $dateNow,
+                'port'      => $port,
+                'status'    => $status,
+            ]);
+      }
+
+      function sendLiveSMSAnnouncement($smsport = '', $start = '', $limit = ''){
+
+        if(!$smsport)
+        {
+            echo 'sms failed no sms port selected';
+            return;
+        }
+        
+        try {
+        
+                $stmt = DB::select("Select * from announcement_logs where status = 0 limit ".$start.", ".$limit); 
+                $mobilenum_pattern = "/^(09)\d{9}$/";
+                echo 'sms sending:: ';
+                if($result){
+                    foreach ($result as $value) {
+                    
+                    if(!preg_match($mobilenum_pattern, $value->mobile))
+                    {
+                        $sms = 2;
+                        $this->updateAnnouncementLogStatus($value->uuid, $value->_userId, $sms, $smsport);
+                        continue;
+                    }
+                    
+                    $message_ann = $value->smsmessage."\n\nCordova Catholic Cooperative School. 
+                    ❤️CCCS_cares";
+                    $smsResult = $this->smsRequest($value->mobile, $message_ann, $smsport);
+                    $sms = 1;
+                    echo ' -'.$smsResult.'- ';
+                    
+                    if($smsResult == 'failed'){
+                        sleep(1);
+                        $count = 1;
+                        while ($smsResult == 'failed' && $count <= 2) {
+                        $smsResult = $this->smsRequest($value->mobile, $message_ann, $smsport);
+                        $count++;
+                        }
+                        
+                        if($smsResult == 'failed')
+                        $sms = 2;
+                        $this->updateAnnouncementLogStatus($value->uuid, $value->_userId, $sms, $smsport);
+        
+                    }else{
+                        $this->updateAnnouncementLogStatus($value->uuid, $value->_userId, $sms, $smsport);
+                    }
+                    sleep(8);
+                    }
+                }
+        } catch(PDOException $e) {
+            echo "Error: " . $e->getMessage();
+        }
+
+      }
+
+      
+      
+      
 }
 

@@ -16,7 +16,7 @@ class CurlService{
 
   public function __construct() {
         $this->host     = 'http://sap4.northtrend.com';
-        $this->port     = '777';
+        $this->port     = '80';
         $this->username = 'apiuser';
         $this->password = 'apipass';
   } 
@@ -31,7 +31,7 @@ class CurlService{
     $SMS_message = $message;
     // $channel = '5';
     $SMS_gateway = 'sap4.northtrend.com';
-    $SMS_port = '777';
+    $SMS_port = '80';
     $SMS_destination = $mobile;
     // Starting Assumptions
     $SMS_success = 'NO';
@@ -60,6 +60,7 @@ class CurlService{
       $SMS_success = 'NO';
     }
     curl_close($ch);
+    $SMS_success = 'YES';
 
         if ($SMS_success == 'YES')
         {
@@ -131,15 +132,16 @@ try {
 
         $status = $value['status'];
         $msg = smsMessageTemplate($value['status'], $value['fullname'], $value['date_created']);
-        $smsResult = sendMsg($value['guardian_contact'], $msg, 5);
+        $smsResult = sendMsg($value['guardian_contact'], $msg, 3);
         $sms = 1;
-
+        $smsResult = 'success';
+        
         if($smsResult == 'failed'){
           sleep(1);
           // $smsResult = sendMsg($value['guardian_contact'], $value['date_created'], $msg, 5);
           $count = 1;
           while ($smsResult == 'failed' && $count <= 3) {
-            $smsResult = sendMsg($value['guardian_contact'], $msg, 5);
+            $smsResult = sendMsg($value['guardian_contact'], $msg, 3);
             $count++;
           }
           // if($smsResult == 'failed')

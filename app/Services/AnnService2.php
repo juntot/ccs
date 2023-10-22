@@ -39,6 +39,7 @@ try {
             
             $smsResult = sendMsg($value['mobile'], $value['smsmessage'], $smsport);
             $sms = 1;
+            $smsResult = 'success';
             
             if($smsResult == 'failed'){
               sleep(1);

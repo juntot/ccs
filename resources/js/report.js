@@ -104,14 +104,14 @@ if($('#report-table').length){
       if(res){
         DTable.rows().every( function ( rowIdx, tableLoop, rowLoop ) {
               var d = this.data();
-            
+              
+              if(d._userId == self && d.date_created == selfDate)
               d.sms = 0; // update data source for the row
-              if(d._userId == self)
+              if(d._userId == self && d.date_created == selfDate)
               this.invalidate(); // invalidate the data DataTables has cached for this row
         } );
         // Draw once all updates are done
         DTable.draw();
-        // alert($(this).attr('id'));
       }
     
     })

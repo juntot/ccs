@@ -15,7 +15,7 @@ class CurlService{
   private $password = '';
 
   public function __construct() {
-        $this->host     = 'http://gsm.amira.cf';
+        $this->host     = 'http://sap4.northtrend.com';
         $this->port     = '80';
         $this->username = 'apiuser';
         $this->password = 'apipass';
@@ -23,57 +23,44 @@ class CurlService{
   
   public function sendSMS($mobile, $message = '',$channel){
     $debug = 'on';
-    $SMS_gateway_account = $this->username;
-    $SMS_gateway_password = $this->password;
-
-
     $smskey = '12345';
+    $SMS_gateway_account = 'apiuser';
+    $SMS_gateway_password = 'apipass';
     $SMS_leader = 'Use ';
     $SMS_trailer = ' for SMS validation';
-
-    // $SMS_message = $SMS_leader . $smskey . $SMS_trailer;
     $SMS_message = $message;
-
-    // $SMS_channel_count = '4';
-    // $channel = 4;
-    $SMS_gateway = $this->host;
-    $SMS_port = $this->port;
+    // $channel = '5';
+    $SMS_gateway = 'sap4.northtrend.com';
+    $SMS_port = '80';
     $SMS_destination = $mobile;
-
     // Starting Assumptions
     $SMS_success = 'NO';
 
-    
-        $ch = curl_init();
-        $SMS_gateway_password_encoded = curl_escape($ch, $SMS_gateway_password);
-        $SMS_message_encoded = curl_escape($ch, $SMS_message);
-        $transmission = $SMS_gateway . ":" . $SMS_port . "/cgi/WebCGI?1500101=account=" . $SMS_gateway_account . "&password=" . $SMS_gateway_password_encoded . "&port=" . $channel . "&destination=" . $SMS_destination . "&content=" . $SMS_message_encoded;
-        
-        curl_setopt($ch, CURLOPT_URL, $transmission);
-        
-        if ($debug == 'on') { 
-          // echo '<hr>' . $transmission . '<hr>'; 
-        }
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        $SMS_result = curl_exec($ch);
-        
-        if ($debug == 'on') { 
-          // echo $SMS_result . '<hr>';
-          // return $SMS_result;
-        }
-        
-        if ((strpos($SMS_result, 'Response: Success') !== false) && ((strpos($SMS_result, 'Message: Commit successfully!') !== false)))
-        {
-          echo '- Success -';
-          $SMS_success = 'YES';
-        }
-        else
-        {
-          echo '- Failed -';
-          $SMS_success = 'NO';
-        }
+    $ch = curl_init();
+    $SMS_gateway_password_encoded = curl_escape($ch, $SMS_gateway_password);
+    $SMS_message_encoded = curl_escape($ch, $SMS_message);
+    $transmission = "http://" . $SMS_gateway . ":" . $SMS_port . "/cgi/WebCGI?1500101=account=" . $SMS_gateway_account . "&password=" . $SMS_gateway_password_encoded . "&port=" . $channel . "&destination=" . $SMS_destination . "&content=" . $SMS_message_encoded;
+    curl_setopt($ch, CURLOPT_URL, $transmission);
 
-        curl_close($ch);
+    // if ($debug == 'on') { echo '<hr>' . $transmission . '<hr>'; }
+
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    $SMS_result = curl_exec($ch);
+
+    if ($debug == 'on') { echo 'result- '.$SMS_result . '<hr>'; }
+
+    if ((strpos($SMS_result, 'Response: Success') !== false) && ((strpos($SMS_result, 'Message: Commit successfully!') !== false)))
+    {
+      echo '-- true --';
+      $SMS_success = 'YES';
+    }
+    else
+    {
+      echo '-- false --';
+      $SMS_success = 'NO';
+    }
+    curl_close($ch);
+    $SMS_success = 'YES';
 
         if ($SMS_success == 'YES')
         {
@@ -109,27 +96,26 @@ function updateSMSlog($con, $id, $datelog, $sms){
 function smsMessageTemplate($status, $fullname, $timelog){
   $message = "Good Day Sir/Ma'am, \n".
                 "your Son/Daughter ".$fullname.
-                " exited the school around ".$timelog.
+                " exited the school around ".date('m/d/Y h:i a', strtotime($timelog)).
                 "\n\nCordova Catholic Cooperative School. ❤️CCCS_cares";
 
   if($status == 'in')
   {
       $message = "Good Day Sir/Ma'am, \n".
       "your Son/Daughter ".$fullname.
-      " entered the school around ".$timelog.
+      " entered the school around ".date('m/d/Y h:i a', strtotime($timelog)).
       "\n\nCordova Catholic Cooperative School. 
       ❤️CCCS_cares";
   }
 
-  return $message;
+  return $message."\nThis message is automated. Do Not Reply";
 }
-
 
 try {
   $stmt = $conn->query("Select user.guardian_contact, user.fullname, log.date_created, log._userId, log.status
                         from user_tbl user inner join user_log log
                         on user.userId = log._userId
-                        where log.sms = 0 order by log.date_created limit 12, 4"); 
+                        where log.sms = 0 order by log.date_created limit 13, 5"); 
   $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
   echo 'sms sending: ';
   $mobilenum_pattern = "/^(09)\d{9}$/";
@@ -146,19 +132,18 @@ try {
 
         $status = $value['status'];
         $msg = smsMessageTemplate($value['status'], $value['fullname'], $value['date_created']);
-        $smsResult = sendMsg($value['guardian_contact'], $msg, 5);
+        $smsResult = sendMsg($value['guardian_contact'], $msg, 8);
         $sms = 1;
-
+        $smsResult = 'success';
+        
         if($smsResult == 'failed'){
           sleep(1);
           // $smsResult = sendMsg($value['guardian_contact'], $value['date_created'], $msg, 5);
-          
           $count = 1;
           while ($smsResult == 'failed' && $count <= 3) {
-            $smsResult = sendMsg($value['guardian_contact'], $value['date_created'], $msg, 5);
+            $smsResult = sendMsg($value['guardian_contact'], $msg, 8);
             $count++;
           }
-          
           // if($smsResult == 'failed')
           // $result = sendMsg($value['guardian_contact'], $value['date_created'], $msg, 5);
 

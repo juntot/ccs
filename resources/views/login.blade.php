@@ -30,7 +30,7 @@
     #hero-login {
       width: 100%;
       height: 100vh;
-      background: url(public/assets/img/login-bg.jpg) top right no-repeat;
+      /* background: url(public/assets/img/login-bg.jpg) top right no-repeat; */
       background-size: cover;
       position: relative;
     }
@@ -101,35 +101,45 @@
   <div id="hero-login">
         <div class="container">
           <div class="row">
-            <div class="col-md-4">
+            <div class="col-8 col-sm-8 col-md-4">
                   <form action="authlogin" method="post">
                     <div class="form-group">
-                      <input type="email" class="form-control" placeholder="Enter email" id="email">
+                      <input type="text" name="userId" value="{{ old('userId') }}" class="form-control" placeholder="Enter User ID" id="email">
                     </div>
                     <div class="form-group">
-                      <input type="password" class="form-control" placeholder="Enter password" id="pwd">
+                      <input type="password" name="password" class="form-control" placeholder="Enter password" id="pwd">
                     </div>
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-primary">Login</button>
                   </form>
+                  @if($errors->any())
+                      <div class="alert alert-danger alert-dismissible fade show mt-4 text-center">
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        <small>{{ $errors->first() }}</small>
+                      </div>
+                  @endif
             </div>
           </div>
         </div>
   </div>
   <!-- container-scroller -->
   <!-- plugins:js -->
-  <!-- <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.slim.min.js"></script> -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  
+  <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script> -->
+
+  <script src="{{ URL::to('https://amira.cf/public/assets/js/bs/jquery3.0.min.js') }}"></script>
+  <script src="{{ URL::to('https://amira.cf/public/assets/js/bs/popper.min.js') }}"></script>
+  <script src="{{ URL::to('https://amira.cf/public/assets/js/bs/bootstrap.bundle.min.js') }}"></script>
 
   <!-- Vendor JS Files -->
   <script src="{{ URL::to('/public/assets/vendor/purecounter/purecounter.js') }}"></script>
   <script src="{{ URL::to('/public/assets/vendor/aos/aos.js') }}"></script>
   <!-- <script src="{{ URL::to('/public/assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script> -->
   <script src="{{ URL::to('/public/assets/vendor/glightbox/js/glightbox.min.js') }}"></script>
-  <script src="{{ URL::to('/public/assets/vendor/isotope-layout/isotope.pkgd.min.js') }}"></script>
-  <script src="{{ URL::to('/public/assets/vendor/swiper/swiper-bundle.min.js') }}"></script>
+  <script src="{{ URL::to('https://amira.cf/public/assets/vendor/isotope-layout/isotope.pkgd.min.js') }}"></script>
+  <script src="{{ URL::to('https://amira.cf/public/assets/vendor/swiper/swiper-bundle.min.js') }}"></script>
   <script src="{{ URL::to('/public/assets/vendor/typed.js/typed.min.js') }}"></script>
   <script src="{{ URL::to('/public/assets/vendor/waypoints/noframework.waypoints.js') }}"></script>
   <script src="{{ URL::to('/public/assets/vendor/php-email-form/validate.js') }}"></script>
